@@ -1,0 +1,71 @@
+version: 2
+
+sources:
+  - name: banking_bronze
+    database: banking_db # Replace with your actual Snowflake database name
+    schema: banking_bronze
+    tables:
+      - name: raw_customers
+        description: "Raw landing table for customer registration profiles."
+      - name: raw_transactions
+        description: "Raw landing table for account ledger transactions."
+
+models:
+  # ==========================================
+  # SILVER LAYER (Staging Models)
+  # ==========================================
+  - name: stg_customers
+    description: "Cleaned and conformed customer master records."
+    columns:
+      - name: customer_id
+        description: "The primary key for customers."
+        tests:
+          - unique
+          - not_null
+
+      - name: email
+        description: "Standardized lower-case customer email address."
+        tests:
+          - not_null
+
+  - name: stg_transactions
+    description: "Standardized ledger records with parsed transaction dates."
+    columns:
+      - name: transaction_id
+        description: "The primary key for transactions."
+        tests:
+          - unique
+          - not_null
+
+      - name: account_id
+        description: "Foreign key linking to bank accounts."
+        tests:
+          - not_null
+
+      - name: customer_id
+        description: "Foreign key linking back to the customer profile."
+        tests:
+          - not_null
+
+      - name: transaction_type
+        description: "Standardized action type (uppercase)."
+        tests:
+          - accepted_values:
+              values: ['DEPOSIT', 'WITHDRAWAL']
+
+  # ==========================================
+  # GOLD LAYER (Mart / Reporting Models)
+  # ==========================================
+  - name: fct_customer_transactions
+    description: "Business-ready aggregated financial metrics per customer profile."
+    columns:
+      - name: customer_id
+        description: "Primary key for the summary profile."
+        tests:
+          - unique
+          - not_null
+
+      - name: current_balance
+        description: "The net remaining balance calculated across all deposits and withdrawals."
+        tests:
+          - not_null
