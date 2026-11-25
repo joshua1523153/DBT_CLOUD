@@ -1,0 +1,10 @@
+version: 2
+
+sources:
+  - name: bank_raw
+    database: BANK_DEMO
+    schema: RAW
+    tables:
+      - name: customers
+      - name: accounts
+      - name: transactions
